@@ -1,0 +1,38 @@
+﻿@page "/test"
+@using Microsoft.EntityFrameworkCore
+@using TaskForge.Data
+@inject TaskForgeDbContext Db
+
+<h3>Test Page</h3>
+
+<button @onclick="AddDummy">Add Goal</button>
+
+<ul>
+    @foreach(var goal in goals)
+    {
+        <li>@goal.Title (@goal.Status)</li>
+    }
+</ul>
+
+@code {
+    List<Goal> goals = new();
+
+    private async Task AddDummy()
+    {
+        var goal = new Goal
+            {
+                Title = "My First Goal",
+                Status = GoalStatus.InProgress
+            };
+
+            Db.Goals.Add(goal);
+            await Db.SaveChangesAsync();
+
+            goals = await Db.Goals.ToListAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        goals = await Db.Goals.ToListAsync();
+    }
+}
