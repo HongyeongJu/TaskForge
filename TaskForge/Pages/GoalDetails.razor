@@ -3,6 +3,7 @@
 @inject NavigationManager Nav
 @using Microsoft.EntityFrameworkCore
 @using TaskForge.Data
+@using MudBlazor
 
 <h3>📌 목표 상세</h3>
 
@@ -16,6 +17,15 @@
         <p>@goal.Description</p>
         <p>마감일 : @(goal.Deadline?.ToShortTimeString() ?? "-")</p>
         <p>우선순위 : @goal.Priority / 상태 : @goal.Status</p>
+
+        @if(TotalTaskCount > 0)
+        {
+            <div class="mb-3">
+                <p>📈 진행률: @CompletedTaskCount / @TotalTaskCount (@CompletionRate%)</p>
+                <MudProgressLinear Value="@CompletionRate" Color="GetProgressColor()" Height="20" />
+            </div>
+        }
+
     </div>
 
     <a class="btn btn-primary mb-2" href="/tasks/create/@GoalId">+ 작업 추가</a>
@@ -50,6 +60,13 @@
     [Parameter] public Guid GoalId { get; set; }
 
     Goal? goal;
+
+    int CompletedTaskCount => goal?.Tasks.Count(t => t.Status == Data.TaskStatus.Completed) ?? 0;
+    int TotalTaskCount => goal?.Tasks.Count ?? 0;
+
+    int CompletionRate => TotalTaskCount == 0 ? 0 : (int)((double)CompletedTaskCount / TotalTaskCount * 100);
+
+    Color GetProgressColor() => CompletionRate == 100 ? Color.Success : Color.Primary;
 
     protected override async Task OnInitializedAsync()
     {
