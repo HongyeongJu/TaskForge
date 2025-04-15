@@ -1,0 +1,46 @@
+﻿@page "/goals/create"
+@inject NavigationManager Nav
+@inject TaskForgeDbContext Db
+@using TaskForge.Data
+
+<h3>🎯 목표 생성</h3>
+
+<EditForm Model="@goal" OnValidSubmit="CreateGoal">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>제목</label>
+        <InputText class="form-control" @bind-Value="goal.Title" />
+    </div>
+    <div class="mb-3">
+        <label>설명</label>
+        <InputTextArea class="form-control" @bind-Value="goal.Description" />
+    </div>
+    <div class="mb-3">
+        <label>우선순위</label>
+        <InputSelect class="form-select" @bind-Value="goal.Priority">
+            @foreach (var level in Enum.GetValues<PriorityLevel>())
+            {
+                <option value="@level">@level</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label>마감일</label>
+        <InputDate class="form-control" @bind-Value="goal.Deadline" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">저장</button>
+</EditForm>
+
+@code {
+    Goal goal = new() { Status = GoalStatus.NotStarted };
+
+    async Task CreateGoal()
+    {
+        Db.Goals.Add(goal);
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo("/goals");
+    }
+}

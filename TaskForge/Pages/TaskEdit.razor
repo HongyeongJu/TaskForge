@@ -1,0 +1,87 @@
+﻿@page "/tasks/create/{GoalId:guid}"
+@page "/tasks/edit/{TaskItemId:guid}"
+@inject TaskForgeDbContext Db
+@inject NavigationManager Nav
+@using TaskForge.Data
+
+<h3>@(isEditMode ? "작업 수정" : "작업 추가")</h3>
+
+@if(task == null)
+{
+    <p>불러오는 중....</p>
+}
+else
+{
+    <EditForm Model="@task" OnValidSubmit="HandleSave">
+        <DataAnnotationsValidator />
+        <ValidationSummary/>
+
+        <div class="mb-3">
+            <label>제목</label>
+            <InputText class="form-control" @bind-Value="task.Title"/>
+        </div>
+        <div class="mb-3">
+            <label>설명</label>
+            <InputTextArea class="form-control" @bind-Value="task.Description"/>
+        </div>
+        <div class="mb-3">
+            <label>상태</label>
+            <InputSelect class="form-select" @bind-Value="task.Status">
+                @foreach(var s in Enum.GetValues<Data.TaskStatus>())
+                {
+                    <option value="@s">@s</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label>우선순위</label>
+            <InputSelect class="form-select" @bind-Value="task.Priority">
+                @foreach (var p in Enum.GetValues<PriorityLevel>())
+                {
+                    <option value="@p">@p</option>
+                })
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label>마감일</label>
+            <InputDate class="form-control" @bind-Value="task.Deadline"/>
+        </div>
+        <button class="btn btn-success">저장</button>
+    </EditForm>
+}
+
+
+@code{
+    [Parameter] public Guid? GoalId { get; set; }
+    [Parameter] public Guid? TaskItemId{ get; set; }
+
+    TaskItem? task;
+    bool isEditMode => TaskItemId != null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(isEditMode)
+        {
+            task = await Db.TaskItems.FindAsync(TaskItemId);
+        }
+        else
+        {
+            task = new TaskItem
+                {
+                    GoalId = GoalId,
+                    Status = Data.TaskStatus.NotStarted,
+                    Priority = PriorityLevel.Medium
+                };
+        }
+    }
+    async Task HandleSave()
+    {
+        if (isEditMode)
+            Db.TaskItems.Update(task!);
+        else
+            Db.TaskItems.Add(task!);
+
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo($"/goals/details/{task!.GoalId}");
+    }
+}

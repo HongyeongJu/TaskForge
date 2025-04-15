@@ -1,0 +1,71 @@
+﻿@page "/goals/details/{GoalId:guid}"
+@inject TaskForgeDbContext Db
+@inject NavigationManager Nav
+@using Microsoft.EntityFrameworkCore
+@using TaskForge.Data
+
+<h3>📌 목표 상세</h3>
+
+@if(goal == null)
+{
+    <p>목표를 불러오는 중...</p>
+}else
+{
+    <div class="card p-3 mb-3">
+        <h4>@goal.Title</h4>
+        <p>@goal.Description</p>
+        <p>마감일 : @(goal.Deadline?.ToShortTimeString() ?? "-")</p>
+        <p>우선순위 : @goal.Priority / 상태 : @goal.Status</p>
+    </div>
+
+    <a class="btn btn-primary mb-2" href="/tasks/create/@GoalId">+ 작업 추가</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>제목</th>
+                <th>상태</th>
+                <th>마감일</th>
+                <th>작업</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var task in goal.Tasks)
+            {
+                <tr>
+                    <td>@task.Title</td>
+                    <td>@task.Status</td>
+                    <td>@(task.Deadline?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-info me-1" href="/tasks/edit/@task.TaskItemId">수정</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTask(task.TaskItemId)">삭제</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid GoalId { get; set; }
+
+    Goal? goal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        goal = await Db.Goals
+        .Include(g => g.Tasks)
+        .FirstOrDefaultAsync(g => g.GoalId == GoalId);
+    }
+
+    private async Task DeleteTask(Guid taskId)
+    {
+        var task = await Db.TaskItems.FindAsync(taskId);
+        if(task != null)
+        {
+            Db.TaskItems.Remove(task);
+            await Db.SaveChangesAsync();
+            goal!.Tasks.Remove(task);
+        }
+    }
+}

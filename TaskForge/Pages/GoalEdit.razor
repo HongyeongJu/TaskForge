@@ -1,0 +1,68 @@
+﻿@page "/goals/edit/{GoalId:guid}"
+@using TaskForge.Data
+@inject TaskForgeDbContext Db
+@inject NavigationManager Nav
+
+<h3>🎯 목표 수정</h3>
+
+@if(goal is null)
+{
+    <p>목표를 불러오는 중...</p>
+}
+else
+{
+    <EditForm Model="@goal" OnValidSubmit="SaveGoal">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+
+        <div class="mb-3">
+            <label>제목</label>
+            <InputText class="form-control" @bind-Value="goal.Title"/>
+        </div>
+        <div class="mb-3">
+            <label>설명</label>
+            <InputTextArea class="form-control" @bind-Value="goal.Description"/>
+        </div>
+        <div class="mb-3">
+            <label>우선순위</label>
+            <InputSelect class="form-select" @bind-Value="goal.Priority">
+                @foreach(var level in Enum.GetValues<PriorityLevel>())
+                {
+                    <option value="@level">@level</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label>상태</label>
+            <InputSelect class="form-select" @bind-Value="goal.Status">
+                @foreach(var status in Enum.GetValues<GoalStatus>())
+                {
+                    <option value="@status">@status</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label>마감일</label>
+            <InputDate class="form-control" @bind-Value="goal.Deadline"/>
+        </div>
+
+        <button class="btn btn-success" type="submit">저장</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid GoalId { get; set; }
+
+    Goal? goal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        goal = await Db.Goals.FindAsync(GoalId);
+    }
+
+    async Task SaveGoal()
+    {
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo("/goals");
+    }
+}

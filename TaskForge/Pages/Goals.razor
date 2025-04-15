@@ -1,0 +1,56 @@
+﻿@page "/goals"
+@inject TaskForgeDbContext Db
+@using Microsoft.EntityFrameworkCore
+@using TaskForge.Data
+
+<h3>🎯 목표 목록</h3>
+
+<a class="btn btn-primary mb-3" href="/goals/create">+ 새 목표 추가</a>
+
+@if (goals is null)
+{
+    <p>불러오는 중...</p>
+}
+else if (!goals.Any())
+{
+    <p>아직 등록된 목표가 없습니다.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>제목</th>
+                <th>우선순위</th>
+                <th>마감일</th>
+                <th>상태</th>
+                <th>작업</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var goal in goals)
+            {
+                <tr>
+                    <td>@goal.Title</td>
+                    <td>@goal.Priority</td>
+                    <td>@(goal.Deadline?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@goal.Status</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-info me-1" href="/goals/edit/@goal.GoalId">수정</a>
+                        <a class="btn btn-sm btn-outline-secondary me-1" href="/goals/details/@goal.GoalId">상세</a>
+                        <a class="btn btn-sm btn-outline-danger" href="/goals/delete/@goal.GoalId">삭제</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Goal>? goals;
+
+    protected override async Task OnInitializedAsync()
+    {
+        goals = await Db.Goals.OrderByDescending(g => g.CreatedAt).ToListAsync();
+    }
+}

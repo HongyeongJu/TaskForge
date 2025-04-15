@@ -1,0 +1,39 @@
+﻿@page "/goals/delete/{GoalId:guid}"
+@inject TaskForgeDbContext Db
+@inject NavigationManager Nav
+@using TaskForge.Data
+
+<h3>❗ 목표 삭제</h3>
+
+@if(goal == null)
+{
+    <p>불러오는 중...</p>
+}
+else
+{
+    <p><strong>@goal.Title</strong> 목표를 정말 삭제하시겠습니까?</p>
+
+    <button class="btn btn-danger" @onclick="Delete">삭제</button>
+    <button class="btn btn-secondary ms-2" @onclick="@(() => Nav.NavigateTo("/goals"))">취소</button>
+}
+
+
+@code {
+    [Parameter] public Guid GoalId { get; set; }
+    Goal? goal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        goal = await Db.Goals.FindAsync(GoalId);
+    }
+
+    async Task Delete()
+    {
+        if(goal != null)
+        {
+            Db.Goals.Remove(goal);
+            await Db.SaveChangesAsync();
+        }
+        Nav.NavigateTo("/goals");
+    }
+}

@@ -18,7 +18,8 @@ namespace TaskForge.Data
             // Configure entity relationships and constraints here
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Goal>().HasMany(g => g.Tasks)
+            modelBuilder.Entity<Goal>()
+                .HasMany(g => g.Tasks)
                 .WithOne(t => t.Goal)
                 .HasForeignKey(t => t.GoalId)
                 .OnDelete(DeleteBehavior.Cascade);
