@@ -46,7 +46,7 @@
                 <tr class="@GetTaskRowClass(task)">
                     <td>
                         <MudCheckBox T="bool"
-                                     ValueChanged="@(checkedValue => ToggleTaskStatus(task, checkedValue))"
+                        ValueChanged="@(checkedValue => ToggleTaskStatus(task, checkedValue))"
                         Value ="@(task.Status == Data.TaskStatus.Completed)"
                         Color="Color.Success"
                         Disabled="@(task.Status == Data.TaskStatus.OnHold)" />
@@ -99,7 +99,26 @@
     {
         task.Status = isChecked ? Data.TaskStatus.Completed : Data.TaskStatus.InProgress;
         Db.TaskItems.Update(task);
+
+        // 작업 상태 반영 후, 연결된 목표 상태를 확인
+        var goalEntity = await Db.Goals
+        .Include(g => g.Tasks)
+        .FirstOrDefaultAsync(g => g.GoalId == task.GoalId);
+
+        if(goalEntity != null)
+        {
+            bool allCompleted = goalEntity.Tasks.All(t => t.Status == Data.TaskStatus.Completed);
+            goalEntity.Status = allCompleted ? Data.GoalStatus.Completed : Data.GoalStatus.InProgress;
+
+            Db.Goals.Update(goalEntity);
+        }
+
         await Db.SaveChangesAsync();
+
+        goal = await Db.Goals
+        .Include(g => g.Tasks)
+        .FirstOrDefaultAsync(g => g.GoalId == GoalId);
+
         StateHasChanged();
     }
 

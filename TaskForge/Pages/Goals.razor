@@ -30,7 +30,7 @@ else
         <tbody>
             @foreach (var goal in goals)
             {
-                <tr>
+                <tr class="@GetGoalRowClass(goal)">
                     <td>@goal.Title</td>
                     <td>@goal.Priority</td>
                     <td>@(goal.Deadline?.ToString("yyyy-MM-dd") ?? "-")</td>
@@ -52,5 +52,16 @@ else
     protected override async Task OnInitializedAsync()
     {
         goals = await Db.Goals.OrderByDescending(g => g.CreatedAt).ToListAsync();
+    }
+
+    private string GetGoalRowClass(Goal goal)
+    {
+        return goal.Status switch
+        {
+            GoalStatus.Completed => "table-success",
+            GoalStatus.InProgress => "table-warning",
+            GoalStatus.OnHold => "table-secondary",
+            _ => ""
+        };
     }
 }
