@@ -33,6 +33,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>완료</th>
                 <th>제목</th>
                 <th>상태</th>
                 <th>마감일</th>
@@ -43,6 +44,12 @@
             @foreach(var task in goal.Tasks)
             {
                 <tr>
+                    <td>
+                        <input type="checkbox"
+                        checked="@(task.Status == Data.TaskStatus.Completed)"
+                        disabled="@(task.Status == Data.TaskStatus.OnHold)"
+                        @onchange="(e) => ToggleTaskStatus(task,e.Value is true )"/>
+                    </td>
                     <td>@task.Title</td>
                     <td>@task.Status</td>
                     <td>@(task.Deadline?.ToString("yyyy-MM-dd") ?? "-")</td>
@@ -84,5 +91,13 @@
             await Db.SaveChangesAsync();
             goal!.Tasks.Remove(task);
         }
+    }
+
+    private async Task ToggleTaskStatus(TaskItem task, bool isChecked)
+    {
+        task.Status = isChecked ? Data.TaskStatus.Completed : Data.TaskStatus.InProgress;
+        Db.TaskItems.Update(task);
+        await Db.SaveChangesAsync();
+        StateHasChanged();
     }
 }
