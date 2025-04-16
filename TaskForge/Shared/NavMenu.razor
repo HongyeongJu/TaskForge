@@ -11,9 +11,10 @@
     <nav class="flex-column">
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="goals">
-                <span class="oi oi-list" aria-hidden="true"></span> Goals
-            </NavLink>
+            <MudNavLink Href="/goals" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.List">목표</MudNavLink>
+        </div>
+        <div class="nav-item px-3">
+            <MudNavLink Href="/goals/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.PieChart">대시보드</MudNavLink>
         </div>
     </nav>
 </div>

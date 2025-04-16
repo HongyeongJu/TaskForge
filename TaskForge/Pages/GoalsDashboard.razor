@@ -1,0 +1,77 @@
+﻿@page "/goals/dashboard"
+@using Microsoft.EntityFrameworkCore
+@using TaskForge.Data
+@inject TaskForgeDbContext Db
+@using MudBlazor
+
+<h3>📊 목표 대시보드</h3>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard>
+            <MudCardContent>
+                <h6>총 목표 수 </h6>
+                <h3>@TotalGoals</h3>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard>
+            <MudCardContent>
+                <h6>완료된 목표</h6>
+                <h3 class="text-success">@CompletedGoals</h3>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard>
+            <MudCardContent>
+                <h6>진행 중인 목표</h6>
+                <h3 class="text-warning">@InProgressGoals</h3>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudCard>
+            <MudCardContent>
+                <h6>보류중인 목표</h6>
+                <h3 class="text-muted">@OnHoldGoals</h3>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+
+</MudGrid>
+
+<MudPaper Class="p-4 mt-4">
+    <h6>🎯 목표 상태 분포</h6>
+    <MudChart ChartType="ChartType.Pie"
+    InputLabels="@StatusLabels"
+    InputData="@StatusData"
+    Width="300"
+    Height="300"
+
+    >
+
+    </MudChart>
+</MudPaper>
+
+@code{
+    int TotalGoals, CompletedGoals, InProgressGoals, OnHoldGoals;
+
+    string[] StatusLabels = new string[] { "완료", "진행 중", "보류" };
+    double[] StatusData = new double[3];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var goals = await Db.Goals.ToListAsync();
+
+        TotalGoals = goals.Count;
+        CompletedGoals = goals.Count(g => g.Status == GoalStatus.Completed);
+        InProgressGoals = goals.Count(g => g.Status == GoalStatus.InProgress);
+        OnHoldGoals = goals.Count(g => g.Status == GoalStatus.OnHold);
+
+        StatusData[0] = CompletedGoals;
+        StatusData[1] = InProgressGoals;
+        StatusData[2] = OnHoldGoals;
+    }
+}
