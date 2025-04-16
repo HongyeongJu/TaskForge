@@ -43,12 +43,13 @@
         <tbody>
             @foreach(var task in goal.Tasks)
             {
-                <tr>
+                <tr class="@GetTaskRowClass(task)">
                     <td>
-                        <input type="checkbox"
-                        checked="@(task.Status == Data.TaskStatus.Completed)"
-                        disabled="@(task.Status == Data.TaskStatus.OnHold)"
-                        @onchange="(e) => ToggleTaskStatus(task,e.Value is true )"/>
+                        <MudCheckBox T="bool"
+                                     ValueChanged="@(checkedValue => ToggleTaskStatus(task, checkedValue))"
+                        Value ="@(task.Status == Data.TaskStatus.Completed)"
+                        Color="Color.Success"
+                        Disabled="@(task.Status == Data.TaskStatus.OnHold)" />
                     </td>
                     <td>@task.Title</td>
                     <td>@task.Status</td>
@@ -93,11 +94,23 @@
         }
     }
 
+
     private async Task ToggleTaskStatus(TaskItem task, bool isChecked)
     {
         task.Status = isChecked ? Data.TaskStatus.Completed : Data.TaskStatus.InProgress;
         Db.TaskItems.Update(task);
         await Db.SaveChangesAsync();
         StateHasChanged();
+    }
+
+    private string GetTaskRowClass(TaskItem task)
+    {
+        return task.Status switch
+        {
+            Data.TaskStatus.Completed => "table-success",
+            Data.TaskStatus.InProgress => "table-warning",
+            Data.TaskStatus.OnHold => "table-secondary",
+            _ => ""
+        };
     }
 }
