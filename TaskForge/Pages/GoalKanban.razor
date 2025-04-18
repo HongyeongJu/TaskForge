@@ -1,0 +1,93 @@
+﻿@page "/goals/kanban/{GoalId:guid}"
+@inject TaskForgeDbContext Db
+@using Microsoft.EntityFrameworkCore
+@using TaskForge.Data
+@using MudBlazor
+
+<h3>📋 칸반 보드 보기</h3>
+
+@if(goal== null)
+{
+    <p>목표를 불러오는 중...</p>
+}
+else
+{
+    <MudGrid>
+        @foreach(var status in Enum.GetValues<Data.TaskStatus>())
+        {
+            <MudItem xs="12" sm="6" md="3">
+                <MudPaper Class="p-3" Style="min-height: 300px;">
+                    <h6>@GetStatusTitle(status)</h6>
+                    @foreach(var task in goal.Tasks.Where(t => t.Status==status))
+                    {
+                        <MudCard Class="mb-2">
+                            <MudCardContent>
+                                <b>@task.Title</b>
+                                <p class="text-muted">@task.Deadline?.ToString("yyyy-MM-dd")</p>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                    OnClick="@(()=> ChangeStatus(task, NextStatus(task.Status)))">
+                                    다음 상태
+                                </MudButton>
+                                <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Secondary"
+                                         Href=@($"/tasks/edit/{task.TaskItemId}")>
+                                    수정
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    }
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code{
+    [Parameter] public Guid GoalId { get; set; }
+
+    Goal? goal;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        goal = await Db.Goals.
+        Include(g => g.Tasks)
+        .FirstOrDefaultAsync(g => g.GoalId == GoalId);
+    }
+
+    private string GetStatusTitle(Data.TaskStatus status) => status switch
+    {
+        Data.TaskStatus.NotStarted => "📦 작업 예정",
+        Data.TaskStatus.InProgress => "🚧 진행 중",
+        Data.TaskStatus.Completed => "✅ 완료",
+        Data.TaskStatus.OnHold => "⏸ 보류 중",
+        _ => status.ToString()
+    };
+
+    private Data.TaskStatus NextStatus(Data.TaskStatus current) => current switch
+    {
+        Data.TaskStatus.NotStarted => Data.TaskStatus.InProgress,
+        Data.TaskStatus.InProgress => Data.TaskStatus.Completed,
+        Data.TaskStatus.Completed => Data.TaskStatus.OnHold,
+        Data.TaskStatus.OnHold => Data.TaskStatus.NotStarted,
+        _ => Data.TaskStatus.NotStarted
+    };
+
+    private async Task ChangeStatus(TaskItem task, Data.TaskStatus newStatus)
+    {
+        task.Status = newStatus;
+        Db.TaskItems.Update(task);
+
+        await Db.SaveChangesAsync();
+
+        //새로고침
+        goal = await Db.Goals
+        .Include(g => g.Tasks)
+        .FirstOrDefaultAsync(g => g.GoalId == GoalId);
+
+        StateHasChanged();
+    }
+
+
+}
